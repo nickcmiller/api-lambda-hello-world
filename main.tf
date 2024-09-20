@@ -1,19 +1,19 @@
+terraform {
+  backend "s3" {
+    bucket = "terraform-state-bucket-api-lambda-hello-world"
+    key    = "terraform.tfstate"
+    region = "us-west-2"
+    encrypt = true
+  }
+}
+
 provider "aws" {
-  region = "us-west-1"
+  region = "us-west-2"
 }
 
 # Retrieve current AWS region
 data "aws_region" "current" {}
 
-# Lambda Function
-resource "aws_lambda_function" "hello_world" {
-  filename         = "${path.module}/lambda/lambda_function.zip"
-  function_name    = "hello_world_lambda"
-  role             = aws_iam_role.lambda_role.arn
-  handler          = "lambda_function.lambda_handler"
-  runtime          = "python3.9"
-  source_code_hash = filebase64sha256("${path.module}/lambda/lambda_function.zip")
-}
 
 # IAM Role for Lambda
 resource "aws_iam_role" "lambda_role" {
@@ -39,19 +39,29 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# API Gateway Rest API
+# Lambda Function
+resource "aws_lambda_function" "hello_world" {
+  filename         = "${path.module}/lambda/lambda_function.zip"
+  function_name    = "hello_world_lambda"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.9"
+  source_code_hash = filebase64sha256("${path.module}/lambda/lambda_function.zip")
+}
+
+# # API Gateway Rest API
 resource "aws_api_gateway_rest_api" "hello_world_api" {
   name = "hello_world_api"
 }
 
-# API Gateway Resource
+# # API Gateway Resource
 resource "aws_api_gateway_resource" "hello_world_resource" {
   rest_api_id = aws_api_gateway_rest_api.hello_world_api.id
   parent_id   = aws_api_gateway_rest_api.hello_world_api.root_resource_id
   path_part   = "hello"
 }
 
-# API Gateway Method
+# # API Gateway Method
 resource "aws_api_gateway_method" "hello_world_method" {
   rest_api_id   = aws_api_gateway_rest_api.hello_world_api.id
   resource_id   = aws_api_gateway_resource.hello_world_resource.id
@@ -59,7 +69,7 @@ resource "aws_api_gateway_method" "hello_world_method" {
   authorization = "NONE"
 }
 
-# API Gateway Integration
+# # API Gateway Integration
 resource "aws_api_gateway_integration" "hello_world_integration" {
   rest_api_id             = aws_api_gateway_rest_api.hello_world_api.id
   resource_id             = aws_api_gateway_resource.hello_world_resource.id
@@ -78,7 +88,7 @@ resource "aws_lambda_permission" "api_gateway_lambda" {
   source_arn    = "${aws_api_gateway_rest_api.hello_world_api.execution_arn}/*/*"
 }
 
-# API Gateway Deployment
+# # API Gateway Deployment
 resource "aws_api_gateway_deployment" "hello_world_deployment" {
   rest_api_id = aws_api_gateway_rest_api.hello_world_api.id
   stage_name  = "dev"
@@ -92,7 +102,7 @@ resource "aws_api_gateway_deployment" "hello_world_deployment" {
   }
 }
 
-# Output the API Gateway URL
+# # Output the API Gateway URL
 output "api_url" {
   value = "${aws_api_gateway_deployment.hello_world_deployment.invoke_url}/hello"
 }
