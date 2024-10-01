@@ -69,7 +69,7 @@ resource "aws_api_gateway_method" "hello_world_method" {
   authorization = "NONE"
 }
 
-# # API Gateway Integration
+# API Gateway Integration
 resource "aws_api_gateway_integration" "hello_world_integration" {
   rest_api_id             = aws_api_gateway_rest_api.hello_world_api.id
   resource_id             = aws_api_gateway_resource.hello_world_resource.id
@@ -102,7 +102,7 @@ resource "aws_api_gateway_deployment" "hello_world_deployment" {
   }
 }
 
-# # Output the API Gateway URL
+# Output the API Gateway URL
 output "api_url" {
   value = "${aws_api_gateway_deployment.hello_world_deployment.invoke_url}/hello"
 }
